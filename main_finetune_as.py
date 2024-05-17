@@ -8,7 +8,7 @@
 # DeiT: https://github.com/facebookresearch/deit
 # BEiT: https://github.com/microsoft/unilm/tree/master/beit
 # --------------------------------------------------------
-
+from util.augmentation import SpecAugment
 import argparse
 import datetime
 import json
@@ -121,7 +121,46 @@ def get_args_parser():
     parser.set_defaults(global_pool=True)
     parser.add_argument('--cls_token', action='store_false', dest='global_pool',
                         help='Use class token instead of global pool for classification')
-
+    # dataset
+    # parser.add_argument('--dataset', type=str, default='icbhi')
+    parser.add_argument('--data_folder', type=str, default='./data/')
+    parser.add_argument('--batch_size', type=int, default=128)
+    parser.add_argument('--num_workers', type=int, default=8)
+    # icbhi dataset
+    parser.add_argument('--class_split', type=str, default='lungsound',
+                        help='lungsound: (normal, crackles, wheezes, both), diagnosis: (healthy, chronic diseases, non-chronic diseases)')
+    parser.add_argument('--n_cls', type=int, default=4,
+                        help='set k-way classification problem')
+    parser.add_argument('--test_fold', type=str, default='official', choices=['official', '0', '1', '2', '3', '4'],
+                        help='test fold to use official 60-40 split or 80-20 split from RespireNet')
+    parser.add_argument('--weighted_sampler', action='store_true',
+                        help='weighted sampler inversly proportional to class ratio')
+    parser.add_argument('--stetho_id', type=int, default=-1, 
+                        help='stethoscope device id, use only when finetuning on each stethoscope data')
+    parser.add_argument('--sample_rate', type=int,  default=16000, 
+                        help='sampling rate when load audio data, and it denotes the number of samples per one second')
+    parser.add_argument('--butterworth_filter', type=int, default=None, 
+                        help='apply specific order butterworth band-pass filter')
+    parser.add_argument('--desired_length', type=int,  default=8, 
+                        help='fixed length size of individual cycle')
+    parser.add_argument('--nfft', type=int, default=1024,
+                        help='the frequency size of fast fourier transform')
+    parser.add_argument('--n_mels', type=int, default=128,
+                        help='the number of mel filter banks')
+    parser.add_argument('--concat_aug_scale', type=float,  default=0, 
+                        help='to control the number (scale) of concatenation-based augmented samples')
+    parser.add_argument('--pad_types', type=str,  default='repeat', 
+                        help='zero: zero-padding, repeat: padding with duplicated samples, aug: padding with augmented samples')
+    parser.add_argument('--resz', type=float, default=1, 
+                        help='resize the scale of mel-spectrogram')
+    parser.add_argument('--raw_augment', type=int, default=0, 
+                        help='control how many number of augmented raw audio samples')
+    parser.add_argument('--blank_region_clip', action='store_true', 
+                        help='remove the blank region, high frequency region')
+    parser.add_argument('--specaug_policy', type=str, default='icbhi_ast_sup', 
+                        help='policy (argument values) for SpecAugment')
+    parser.add_argument('--specaug_mask', type=str, default='mean', 
+                        help='specaug mask value', choices=['mean', 'zero'])
     # Dataset parameters
     parser.add_argument('--data_path', default='/datasets01/imagenet_full_size/061417/', type=str,
                         help='dataset path')
@@ -168,7 +207,7 @@ def get_args_parser():
     parser.add_argument('--freqm', help='frequency mask max length', type=int, default=192)
     parser.add_argument('--timem', help='time mask max length', type=int, default=48)
     #parser.add_argument("--mixup", type=float, default=0, help="how many (0-1) samples need to be mixup during training")
-    parser.add_argument("--dataset", type=str, default="audioset", help="the dataset used", choices=["audioset", "esc50", "speechcommands", "k400"])
+    parser.add_argument("--dataset", type=str, default="audioset", help="the dataset used", choices=["audioset", "icbhi","esc50", "speechcommands", "k400"])
     parser.add_argument("--use_fbank", type=bool, default=False)
     parser.add_argument("--use_soft", type=bool, default=False)
     parser.add_argument("--fbank_dir", type=str, default="/checkpoint/berniehuang/ast/egs/esc50/data/ESC-50-master/fbank", help="fbank dir") 

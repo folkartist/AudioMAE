@@ -15,7 +15,7 @@ import torchaudio
 from torchaudio import transforms as T
 from scipy.signal import butter, lfilter
 
-from .augmentation import augment_raw_audio
+from .util.augmentation import augment_raw_audio
 
 __all__ = ['get_annotations', 'save_image', 'get_mean_and_std', 'get_individual_cycles_librosa', 'get_individual_cycles_torchaudio', 'split_pad_sample', 'generate_mel_spectrogram', 'generate_fbank', 'concat_augmentation', 'get_score']
 

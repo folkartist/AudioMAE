@@ -15,7 +15,7 @@ from PIL import Image
 
 from .icbhi_util import get_annotations, save_image, generate_fbank, get_individual_cycles_librosa, split_pad_sample, generate_mel_spectrogram, concat_augmentation
 from .icbhi_util import get_individual_cycles_torchaudio, cut_pad_sample_torchaudio
-from .augmentation import augment_raw_audio
+from .util.augmentation import augment_raw_audio
 
 
 class ICBHIDataset(Dataset):
