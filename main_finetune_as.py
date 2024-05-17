@@ -40,8 +40,9 @@ import models_vit
 
 from engine_finetune_as import train_one_epoch, evaluate #, train_one_epoch_av, evaluate_av
 from dataset import AudiosetDataset, DistributedWeightedSampler, DistributedSamplerWrapper
+from icbhi_dataset import ICBHIDataset
 from timm.models.vision_transformer import PatchEmbed
-
+from torchvision import transforms
 from torch.utils.data import WeightedRandomSampler
 
 def get_args_parser():
@@ -275,12 +276,26 @@ def main(args):
                       'noise':False,
                       'multilabel':multilabel_dataset[args.dataset],
                       }  
-        dataset_train = AudiosetDataset(args.data_train, label_csv=args.label_csv, audio_conf=audio_conf_train, 
-                                        use_fbank=args.use_fbank, fbank_dir=args.fbank_dir, 
-                                        roll_mag_aug=args.roll_mag_aug, load_video=args.load_video, mode='train')
-        dataset_val = AudiosetDataset(args.data_eval, label_csv=args.label_csv, audio_conf=audio_conf_val, 
-                                        use_fbank=args.use_fbank, fbank_dir=args.fbank_dir, 
-                                        roll_mag_aug=False, load_video=args.load_video, mode='eval')
+        # dataset_train = AudiosetDataset(args.data_train, label_csv=args.label_csv, audio_conf=audio_conf_train, 
+        #                                 use_fbank=args.use_fbank, fbank_dir=args.fbank_dir, 
+        #                                 roll_mag_aug=args.roll_mag_aug, load_video=args.load_video, mode='train')
+        # dataset_val = AudiosetDataset(args.data_eval, label_csv=args.label_csv, audio_conf=audio_conf_val, 
+        #                                 use_fbank=args.use_fbank, fbank_dir=args.fbank_dir, 
+        #                                 roll_mag_aug=False, load_video=args.load_video, mode='eval')
+        args.h, args.w = 798, 128
+        train_transform = [transforms.ToTensor(),
+                            SpecAugment(args),
+                            transforms.Resize(size=(int(args.h * args.resz), int(args.w * args.resz)))]
+        val_transform = [transforms.ToTensor(),
+                        transforms.Resize(size=(int(args.h * args.resz), int(args.w * args.resz)))]                        
+        # train_transform.append(transforms.Normalize(mean=mean, std=std))
+        # val_transform.append(transforms.Normalize(mean=mean, std=std))
+        
+        train_transform = transforms.Compose(train_transform)
+        val_transform = transforms.Compose(val_transform)
+
+        dataset_train = ICBHIDataset(train_flag=True, transform=train_transform, args=args, print_flag=True)
+        dataset_val = ICBHIDataset(train_flag=False, transform=val_transform, args=args, print_flag=True)
 
     if True: #args.distributed:
         num_tasks = misc.get_world_size()
